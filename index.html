@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมเปิดแผ่นป้าย · เรียนรู้คำ นำไปใช้ · 2 ทีม</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; font-family: 'Kanit', 'Sarabun', 'Segoe UI', sans-serif; margin: 0; padding: 0; user-select: none; }
+    body { background: linear-gradient(145deg, #1e3c4f 0%, #2a5f7a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .game-wrapper { max-width: 1350px; width: 100%; background: #fff6e9; border-radius: 48px 48px 32px 32px; box-shadow: 0 20px 30px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,200,0.6); padding: 20px 24px 28px; border-bottom: 8px solid #c49a6c; }
+    h1 { text-align: center; font-size: 2rem; font-weight: 700; color: #2e4a3e; text-shadow: 3px 3px 0 #e9d6b0; letter-spacing: 2px; margin-top: -8px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+    h1 span { background: #ffd966; padding: 4px 18px; border-radius: 40px; font-size: 1.1rem; color: #2e3b2e; box-shadow: inset 0 -3px 0 #b38b4d; }
+
+    .settings-bar { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; background: #e5d7c2; padding: 8px 20px; border-radius: 40px; margin-bottom: 14px; box-shadow: inset 0 0 0 3px #fffcf0, 0 4px 0 #8f7a62; }
+    .settings-bar label { font-weight: 700; color: #2e4a3e; font-size: 0.95rem; }
+    .settings-bar input[type="range"] { width: 140px; accent-color: #4f7a6b; cursor: pointer; }
+    .settings-bar select { font-size: 0.95rem; padding: 4px 10px; border-radius: 20px; border: 2px solid #b0936b; background: #fffcf0; color: #2e4a3e; font-weight: 600; cursor: pointer; }
+    .settings-bar .timer-display { background: #2e4a3e; color: #ffd966; font-weight: 800; font-size: 1.1rem; padding: 4px 14px; border-radius: 30px; min-width: 60px; text-align: center; }
+
+    .team-scoreboard { display: flex; gap: 16px; margin-bottom: 12px; justify-content: center; align-items: stretch; }
+    .team-card { flex: 1; max-width: 300px; border-radius: 28px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; box-shadow: inset 0 -5px 0 rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.15); transition: all 0.2s; border: 3px solid transparent; }
+    .team-card.team-a { background: #f7d9aa; }
+    .team-card.team-b { background: #b7d7b0; }
+    .team-card.active-turn { border-color: #ffd966; box-shadow: 0 0 0 4px #ffeaa3, inset 0 -5px 0 rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.15); transform: scale(1.02); }
+    .team-card .team-icon { font-size: 2.2rem; line-height: 1; }
+    .team-card .team-info { flex: 1; }
+    .team-card .team-name { font-weight: 800; font-size: 1.1rem; color: #2e3b2e; }
+    .team-card .team-score { font-size: 2rem; font-weight: 900; color: #1e3a2e; line-height: 1.1; text-shadow: 1px 1px 0 rgba(255,255,255,0.6); }
+    .turn-badge { background: #2e4a3e; color: #ffd966; font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 30px; white-space: nowrap; }
+
+    .timer-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 110px; }
+    .timer-ring { width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: #2e4a3e; background: conic-gradient(#4f7a6b 0deg, #4f7a6b 360deg, #ddd 0deg); box-shadow: inset 0 0 0 6px #fff6e9, 0 4px 0 #8f7a62; }
+    .timer-ring span { background: #fff6e9; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+    .timer-ring.danger { color: #b71c1c; }
+    .timer-label { font-size: 0.7rem; font-weight: 700; color: #2e4a3e; }
+
+    .main-panel { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+
+    .wheel-section { flex: 1 1 250px; display: flex; flex-direction: column; align-items: center; background: #e5d7c2; border-radius: 40px; padding: 20px 16px 18px; box-shadow: inset 0 0 0 3px #fffcf0, 0 8px 0 #8f7a62; }
+    .wheel-container { position: relative; width: 220px; height: 220px; margin-bottom: 12px; }
+    canvas#wheelCanvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 8px 0 #4a3e2e, 0 12px 18px rgba(0,0,0,0.3); }
+    .pointer { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 38px; filter: drop-shadow(0 6px 3px rgba(0,0,0,0.2)); z-index: 10; line-height: 1; }
+    .spin-btn { background: #f4b942; border: none; border-radius: 60px; padding: 12px 26px; font-size: 1.3rem; font-weight: 700; color: #2f2f1f; box-shadow: 0 6px 0 #9b6f1f, 0 8px 12px rgba(0,0,0,0.2); cursor: pointer; transition: 0.08s linear; display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+    .spin-btn:active { transform: translateY(5px); box-shadow: 0 1px 0 #9b6f1f; }
+    .spin-btn:disabled { opacity: 0.5; transform: none; box-shadow: 0 6px 0 #9b6f1f; pointer-events: none; }
+    .wheel-result { font-weight: 700; font-size: 1.05rem; background: #fef7e0; padding: 6px 16px; border-radius: 40px; margin-top: 10px; color: #3d3d2c; border: 2px dashed #b0936b; }
+
+    .quiz-section { flex: 2 1 460px; background: #fcf8f0; border-radius: 40px; padding: 20px 22px 24px; box-shadow: inset 0 0 0 3px #ffffff, 0 8px 0 #b5a48b; display: flex; flex-direction: column; }
+    .q-count { align-self: flex-end; font-size: 0.85rem; font-weight: 700; color: #6b5a42; background: #efe3cf; padding: 2px 12px; border-radius: 20px; margin-bottom: 8px; }
+    .question-box { background: #2e4a3e; border-radius: 30px; padding: 18px 20px; color: #fdf8ed; min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 1.2rem; font-weight: 600; text-align: center; box-shadow: inset 0 -6px 0 #13271f, 0 6px 0 #3b5e4e; margin-bottom: 20px; line-height: 1.5; word-break: break-word; }
+    .question-box .q-word { font-size: 2.2rem; font-weight: 800; color: #ffd966; line-height: 1.3; }
+    .question-box .q-say { font-size: 1rem; color: #cfe3d6; font-weight: 400; }
+    .question-box .q-meaning { font-size: 1.5rem; font-weight: 700; color: #ffd966; }
+    .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-bottom: 8px; }
+    .choice-btn { background: #fff6e5; border-radius: 20px; padding: 14px 8px; font-size: 1.1rem; font-weight: 600; color: #2d3e30; box-shadow: 0 5px 0 #b09b7e, 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.08s; text-align: center; line-height: 1.4; word-break: break-word; min-height: 70px; display: flex; align-items: center; justify-content: center; border: 2px solid #eadbc4; }
+    .choice-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b09b7e; }
+    .choice-btn.correct { background: #b5e0b0; border-color: #2e7d32; box-shadow: 0 5px 0 #1e5e22; color: #1a3b1a; }
+    .choice-btn.wrong { background: #f4b6b6; border-color: #b71c1c; box-shadow: 0 5px 0 #8b1a1a; color: #4a0e0e; }
+    .choice-btn:disabled { opacity: 0.65; transform: none; pointer-events: none; }
+    .choice-btn.correct:disabled, .choice-btn.wrong:disabled { opacity: 1; }
+    .feedback-area { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 1.1rem; font-weight: 600; min-height: 54px; background: #e9ddcd; border-radius: 40px; padding: 6px 16px; flex-wrap: wrap; gap: 8px; }
+    .feedback-text { color: #2a4d3a; font-size: 1rem; flex: 1; min-width: 160px; }
+    .next-btn { background: #4f7a6b; border: none; border-radius: 30px; padding: 10px 22px; font-size: 1rem; font-weight: 700; color: white; box-shadow: 0 4px 0 #224b3b; cursor: pointer; }
+    .next-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #224b3b; }
+    .next-btn:disabled { opacity: 0.4; transform: none; pointer-events: none; }
+    .reset-btn { background: #c49a6c; border: none; border-radius: 40px; padding: 8px 18px; font-size: 0.9rem; font-weight: 600; color: #2c1f0e; box-shadow: 0 4px 0 #7a5e40; cursor: pointer; }
+    .reset-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #7a5e40; }
+
+    .steal-banner { display: none; align-items: center; justify-content: center; gap: 10px; background: #ffd966; color: #5a3e00; font-weight: 800; font-size: 1.1rem; padding: 10px 20px; border-radius: 40px; margin-bottom: 12px; border: 3px dashed #c49a6c; animation: pulse 0.9s infinite alternate; text-align: center; flex-wrap: wrap; }
+    .steal-banner.show { display: flex; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.02); } }
+    .steal-btn { background: #b71c1c; color: #fff; border: none; border-radius: 30px; padding: 8px 20px; font-size: 1rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 0 #7a1010; }
+    .steal-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #7a1010; }
+    .steal-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+    .turn-indicator { display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: #2e4a3e; background: #ffeaa3; padding: 8px 20px; border-radius: 40px; margin-bottom: 12px; border: 2px dashed #c49a6c; text-align: center; }
+    .jp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+    .jp-modal.show { display: flex; }
+    .jp-box { background: #111; border: 4px solid #ffd966; border-radius: 36px; padding: 22px 24px 26px; max-width: 560px; width: 100%; text-align: center; box-shadow: 0 0 40px rgba(255,217,102,0.5); animation: pop 0.3s ease-out; }
+    @keyframes pop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .jp-title { font-size: 2.4rem; font-weight: 800; color: #ffd966; letter-spacing: 2px; }
+    .jp-sub { color: #fdf8ed; font-size: 1.1rem; margin: 4px 0 16px; }
+    .jp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .jp-num { background: #ffd966; color: #111; border: none; border-radius: 16px; padding: 12px 0; font-size: 1.3rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 0 #9b6f1f; }
+    .jp-num:hover { background: #ffe9a3; }
+    .jp-num:active { transform: translateY(3px); box-shadow: 0 1px 0 #9b6f1f; }
+    @media (max-width: 800px) {
+      .game-wrapper { padding: 14px; }
+      .choices-grid { grid-template-columns: 1fr; }
+      .question-box { font-size: 1rem; }
+      .question-box .q-word { font-size: 1.7rem; }
+      .team-card .team-score { font-size: 1.6rem; }
+      .team-card .team-icon { font-size: 1.8rem; }
+      .timer-ring { width: 70px; height: 70px; font-size: 1.3rem; }
+      .timer-ring span { width: 54px; height: 54px; }
+    }
+  </style>
+</head>
+<body>
+<div class="game-wrapper">
+  <h1>📖 เปิดแผ่นป้าย <span>เรียนรู้คำ นำไปใช้ · 2 ทีม</span></h1>
+
+  <div class="settings-bar">
+    <label for="timerSlider">⏱️ เวลาต่อข้อ:</label>
+    <input type="range" id="timerSlider" min="5" max="60" step="5" value="20">
+    <span class="timer-display" id="timerDisplay">20 วินาที</span>
+    <label for="modeSelect">📝 แบบคำถาม:</label>
+    <select id="modeSelect">
+      <option value="mix">สลับกัน</option>
+      <option value="w2m">คำศัพท์ → ความหมาย</option>
+      <option value="m2w">ความหมาย → คำศัพท์</option>
+    </select>
+  </div>
+
+  <div class="team-scoreboard">
+    <div class="team-card team-a" id="teamACard">
+      <div class="team-icon">🦁</div>
+      <div class="team-info"><div class="team-name">ทีม A</div><div class="team-score" id="teamAScore">0</div></div>
+      <div class="turn-badge" id="teamABadge">ตาของคุณ</div>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-ring" id="timerRing"><span id="timerText">20</span></div>
+      <div class="timer-label">วินาที</div>
+    </div>
+    <div class="team-card team-b" id="teamBCard">
+      <div class="team-icon">🐻</div>
+      <div class="team-info"><div class="team-name">ทีม B</div><div class="team-score" id="teamBScore">0</div></div>
+      <div class="turn-badge" id="teamBBadge">รอ</div>
+    </div>
+  </div>
+
+  <div class="turn-indicator" id="turnIndicator">🎯 ตาของทีม A — ตอบคำถามให้ถูกก่อนหมุนวงล้อ!</div>
+
+  <div class="steal-banner" id="stealBanner">
+    <span id="stealText">⏰ หมดเวลา! ทีม B สามารถแย่งแต้มได้</span>
+    <button class="steal-btn" id="stealBtn">⚡ แย่ง 3 คะแนน!</button>
+  </div>
+
+  <div class="steal-banner" id="offerBanner">
+    <span id="offerText">ทีม B จะตอบข้อนี้ไหม? ถูก +3 · ผิด -3</span>
+    <button class="steal-btn" id="offerYesBtn">✋ ตอบ</button>
+    <button class="steal-btn" id="offerNoBtn" style="background:#6b5a42; box-shadow:0 4px 0 #3e3426;">🙅 ไม่ตอบ</button>
+  </div>
+
+  <div class="main-panel">
+    <div class="wheel-section">
+      <div class="wheel-container">
+        <div class="pointer">🔻</div>
+        <canvas id="wheelCanvas" width="400" height="400"></canvas>
+      </div>
+      <button class="spin-btn" id="spinBtn" disabled>🎡 หมุนวงล้อ</button>
+      <div class="wheel-result" id="wheelResult">แต้ม: ?</div>
+    </div>
+
+    <div class="quiz-section">
+      <div class="q-count" id="qCount">ข้อที่ 0</div>
+      <div class="question-box" id="questionText">กำลังเตรียมโจทย์...</div>
+      <div class="choices-grid" id="choicesContainer"></div>
+      <div class="feedback-area">
+        <span class="feedback-text" id="feedbackMsg">⭐ ตอบถูกก่อน แล้วค่อยหมุนวงล้อ!</span>
+        <div>
+          <button class="next-btn" id="nextBtn" disabled>⏩ ข้อต่อไป</button>
+          <button class="reset-btn" id="resetBtn">🔄 เริ่มใหม่</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="jp-modal" id="jackpotModal">
+  <div class="jp-box">
+    <div class="jp-title">💰 JACKPOT! 💰</div>
+    <div class="jp-sub"><span id="jackpotTeam">ทีม A</span> เลือกแต้มที่ต้องการ (ไม่เกิน 25)</div>
+    <div class="jp-grid" id="jackpotGrid"></div>
+  </div>
+</div>
+<script>
+  (function(){
+    // ---------- คำศัพท์จากหนังสือ "เรียนรู้คำ นำไปใช้" หน้า ๑๓๓–๑๓๕ ----------
+    // g = กลุ่มความหมายใกล้กัน (จะไม่ถูกใช้เป็นตัวลวงของกันและกัน)
+    const vocab = [
+      { w: "กระเดียด", m: "เอาเข้าข้างสะเอว" },
+      { w: "กระบี่", m: "ลิง" },
+      { w: "กระเวน", m: "เที่ยวตรวจตราไปทั่ว ๆ" },
+      { w: "กระออม", m: "ภาชนะสานด้วยไม้ไผ่ ใช้ใส่น้ำ" },
+      { w: "กัมปนาท", s: "กำ-ปะ-นาด", m: "เสียงสนั่นหวั่นไหว", g: "sound" },
+      { w: "กุณฑล", s: "กุน-ทน", m: "ตุ้มหู" },
+      { w: "กุมภัณฑ์", s: "กุม-พัน", m: "ยักษ์" },
+      { w: "กุลาหล", s: "กุ-ลา-หน", m: "โกลาหล อื้ออึง วุ่นวาย", g: "sound" },
+      { w: "ไกรสร", s: "ไกฺร-สอน", m: "สิงโต" },
+      { w: "ขัณฑ์", s: "ขัน", m: "ภาค ตอน ส่วน" },
+      { w: "เขจร", s: "เข-จอน", m: "เหาะไป", g: "fly" },
+      { w: "คทาธร", s: "คะ-ทา-ทอน", m: "ตะบอง" },
+      { w: "ครรชิต", s: "คัน-ชิด", m: "กึกก้อง กระหึ่ม", g: "sound" },
+      { w: "คัคนานต์", s: "คัก-คะ-นาน", m: "ฟ้า" },
+      { w: "คีรินทร", s: "คี-ริน-ทอน", m: "ภูเขา", g: "mount" },
+      { w: "จาบัลย์", s: "จา-บัน", m: "กระสับกระส่าย ร้องไห้คร่ำครวญ", g: "sad" },
+      { w: "จุรณ", s: "จุน", m: "ของที่ป่นละเอียด ผง" },
+      { w: "ชลเนตร", s: "ชน-ละ-เนด", m: "น้ำตา", g: "sad" },
+      { w: "ตรีกูฏ", m: "ภูเขา ๓ ลูกที่รองรับเขาพระสุเมรุ", g: "mount" },
+      { w: "ตรุ", s: "ตฺรุ", m: "ที่ขังคน เรือนจำนักโทษ" },
+      { w: "โตมร", s: "โต-มอน", m: "อาวุธสำหรับซัด หอกซัด" },
+      { w: "ไตรดาล", s: "ไตฺร-ดาน", m: "โลกทั้งสาม (สวรรค์ โลกมนุษย์ บาดาล)", g: "earth" },
+      { w: "ทวาร", s: "ทะ-วาน", m: "ประตู" },
+      { w: "ทินกร", s: "ทิน-นะ-กอน", m: "พระอาทิตย์" },
+      { w: "โทมนัสสา", s: "โทม-มะ-นัด-สา", m: "ความเสียใจ ความทุกข์ใจ", g: "sad" },
+      { w: "นักสิทธิ์", m: "ฤษี", g: "fly" },
+      { w: "บทศรี", s: "บด-ทะ-สี", m: "เท้า (ใช้แก่เจ้านาย)" },
+      { w: "บีฑา", s: "บี-ทา", m: "เบียดเบียน บีบคั้น เจ็บปวด" },
+      { w: "บุษบง", s: "บุด-สะ-บง", m: "ดอกไม้" },
+      { w: "พจนารถ", s: "พด-จะ-นาด", m: "เนื้อความของคำพูด" },
+      { w: "พรรณราย", s: "พัน-นะ-ราย", m: "งามผุดผ่อง" },
+      { w: "พรหมาน", s: "พฺรม-มาน", m: "พระพรหม ผู้สร้างโลก", g: "god" },
+      { w: "พระพาย", m: "ลม เทพเจ้าแห่งลม", g: "god" },
+      { w: "พระภูวไนย", m: "พระเจ้าแผ่นดิน (ในที่นี้คือพระราม)", g: "god" },
+      { w: "ภุมรี", s: "พุม-มะ-รี", m: "แมลงผึ้ง แมลงภู่" },
+      { w: "มรคา", s: "มอ-ระ-คา", m: "ทาง ช่อง ถนน" },
+      { w: "ยอกร", s: "ยอ-กอน", m: "ยกมือไหว้" },
+      { w: "ยองใย", m: "เล็กเท่าใยแมงมุม" },
+      { w: "ไยไพ", m: "เยาะเย้ย พูดให้เขาอาย" },
+      { w: "โลกธาตุ", s: "โลก-กะ-ทาด", m: "แผ่นดิน", g: "earth" },
+      { w: "วิทยา", m: "วิทยาธร อมนุษย์ที่เหาะเหินได้", g: "fly" },
+      { w: "ศิโรเพฐน์", s: "สิ-โร-เพด", m: "ผ้าโพกศีรษะ" },
+      { w: "สมประดี", m: "ความรู้สึกตัว" },
+      { w: "สระโบกขรณี", s: "สะ-โบก-ขะ-ระ-นี", m: "สระบัว" },
+      { w: "สัประยุทธ์", s: "สับ-ปฺระ-ยุด", m: "รบพุ่งชิงชัยกัน" },
+      { w: "สาธารณ์", s: "สา-ทาน", m: "ต่ำ เลว ชั่วช้า" },
+      { w: "สีหบัญชร", s: "สี-หะ-บัน-ชอน", m: "หน้าต่างที่พระมหากษัตริย์เสด็จออกให้เข้าเฝ้า" },
+      { w: "สุรกานต์", s: "สุ-ระ-กาน", m: "เป็นที่รักของเทวดา", g: "god" },
+      { w: "โสมนัส", s: "โสม-มะ-นัด", m: "ความสุขใจ ความปลาบปลื้ม", g: "sad" },
+      { w: "ไสยา", m: "การนอน ที่นอน" },
+      { w: "หริรักษ์", s: "หะ-ริ-รัก", m: "พระนารายณ์", g: "god" },
+      { w: "หัสนัยน์", m: "ผู้มีพันตา หมายถึงพระอินทร์", g: "god" },
+      { w: "เหมันต์", s: "เห-มัน", m: "ฤดูหนาว" },
+      { w: "อลงกรณ์", s: "อะ-ลง-กอน", m: "การตกแต่ง เครื่องประดับ" },
+      { w: "อวตาร", s: "อะ-วะ-ตาน", m: "แบ่งภาคมาเกิดในโลก", g: "god" },
+      { w: "อหังการ์", s: "อะ-หัง-กา", m: "ความเย่อหยิ่งจองหอง ทะนงตัว" },
+      { w: "อินทรีย์", s: "อิน-ซี", m: "ร่างกายและจิตใจ" }
+    ];
+
+    const shuffle = arr => {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    };
+
+    // Build one question from a vocab entry; distractors avoid the same meaning-group
+    function buildQuestion(item, type) {
+      const pool = shuffle(vocab.filter(v => v !== item && (!item.g || v.g !== item.g))).slice(0, 3);
+      const opts = shuffle([item, ...pool]);
+      return {
+        item, type,
+        choices: opts.map(o => type === 'w2m' ? o.m : o.w),
+        answer: opts.indexOf(item)
+      };
+    }
+
+    // ---------- WHEEL ----------
+    const wheelValues = [10, 20, -5, 5, 15, -10, 25, 0, 30, -15, 8, 12, -8, 18, 22, -3];
+    const segColors = ['#f9e3a0','#b7d7b0','#f4b6b6','#a7c7e7','#d9b8e0','#f7c59f','#b0e0e6','#e6d7b8','#ffe0a3','#c8e6c0','#f9c8c8','#b8d8f0','#e8c8f0','#ffd9b3','#c0e8f0','#f0e0c0'];
+
+    // ---------- DOM ----------
+    const $ = id => document.getElementById(id);
+    const canvas = $('wheelCanvas'), ctx = canvas.getContext('2d');
+    const spinBtn = $('spinBtn'), wheelResult = $('wheelResult');
+    const questionText = $('questionText'), choicesContainer = $('choicesContainer'), qCount = $('qCount');
+    const feedbackMsg = $('feedbackMsg'), nextBtn = $('nextBtn'), resetBtn = $('resetBtn');
+    const turnIndicator = $('turnIndicator');
+    const timerSlider = $('timerSlider'), timerDisplay = $('timerDisplay'), timerRing = $('timerRing'), timerText = $('timerText');
+    const modeSelect = $('modeSelect');
+    const stealBanner = $('stealBanner'), stealText = $('stealText'), stealBtn = $('stealBtn');
+    const offerBanner = $('offerBanner'), offerText = $('offerText');
+    $('offerYesBtn').addEventListener('click', () => acceptOffer());
+    $('offerNoBtn').addEventListener('click', () => declineOffer());
+    const teamAScoreEl = $('teamAScore'), teamBScoreEl = $('teamBScore');
+    const teamACard = $('teamACard'), teamBCard = $('teamBCard'), teamABadge = $('teamABadge'), teamBBadge = $('teamBBadge');
+
+    // ---------- STATE ----------
+    let currentAngle = 0, spinning = false;
+    let jackpotUsed = false; // only resets on page refresh
+    const jackpotModal = $('jackpotModal'), jackpotGrid = $('jackpotGrid'), jackpotTeam = $('jackpotTeam');
+    let teams = [{ score: 0 }, { score: 0 }];
+    let currentTeamIndex = 0;
+    let deck = [], current = null, questionNo = 0;
+    let answeredCorrectly = false, answerSubmitted = false, wheelSpun = false, questionLocked = false;
+    let phase = 'answer'; // 'answer' | 'spin' | 'wait' | 'steal'
+    let timerDuration = 20, timerRemaining = 0, timerInterval = null;
+
+    const teamLabel = i => i === 0 ? 'ทีม A 🦁' : 'ทีม B 🐻';
+
+    // ---------- WHEEL SEGMENTS ----------
+    // Black JACKPOT slice takes exactly 10% of the wheel (so 10% chance).
+    // Once hit, it disappears until the page is refreshed (🔄 เริ่มใหม่ does NOT bring it back).
+    const JACKPOT_SHARE = 0.10, JACKPOT_MAX = 25;
+    function getSegments() {
+      const segs = wheelValues.map((v, i) => ({ value: v, color: segColors[i % segColors.length] }));
+      if (!jackpotUsed) segs.splice(8, 0, { jackpot: true, color: '#111111' });
+      const normalShare = jackpotUsed ? 1 / wheelValues.length : (1 - JACKPOT_SHARE) / wheelValues.length;
+      let acc = 0;
+      segs.forEach(s => { s.size = (s.jackpot ? JACKPOT_SHARE : normalShare) * Math.PI * 2; s.start = acc; acc += s.size; });
+      return segs;
+    }
+
+    // ---------- DRAW WHEEL ----------
+    function drawWheel() {
+      const cx = 200, cy = 200, r = 180;
+      ctx.clearRect(0, 0, 400, 400);
+      getSegments().forEach(s => {
+        const a0 = s.start + currentAngle;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a0, a0 + s.size); ctx.closePath();
+        ctx.fillStyle = s.color; ctx.fill();
+        ctx.strokeStyle = s.jackpot ? '#ffd966' : '#3d3d1f'; ctx.lineWidth = s.jackpot ? 4 : 2.5; ctx.stroke();
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(a0 + s.size / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (s.jackpot) {
+          ctx.font = 'bold 22px "Kanit", "Segoe UI", sans-serif'; ctx.fillStyle = '#ffd966';
+          ctx.fillText('JACKPOT', 112, 0);
+        } else {
+          ctx.font = 'bold 26px "Kanit", "Segoe UI", sans-serif'; ctx.fillStyle = '#2d2d0a';
+          ctx.fillText((s.value > 0 ? '+' : '') + s.value, 120, 0);
+        }
+        ctx.restore();
+      });
+      ctx.beginPath(); ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
+      ctx.fillStyle = '#d9b382'; ctx.shadowColor = '#2a2a2a'; ctx.shadowBlur = 12; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#8b6e4b'; ctx.lineWidth = 4; ctx.stroke();
+    }
+
+    function getLandedSegment() {
+      const rel = ((-Math.PI / 2 - currentAngle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      const segs = getSegments();
+      return segs.find(s => rel >= s.start && rel < s.start + s.size) || segs[segs.length - 1];
+    }
+
+    // ---------- TIMER ----------
+    function updateTimerUI() {
+      const frac = timerRemaining / timerDuration, deg = Math.max(0, frac * 360);
+      const color = frac > 0.5 ? '#4f7a6b' : (frac > 0.25 ? '#f4b942' : '#b71c1c');
+      timerRing.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #ddd ${deg}deg)`;
+      timerText.textContent = Math.ceil(timerRemaining);
+      timerRing.classList.toggle('danger', frac <= 0.25);
+    }
+    function startTimer() {
+      stopTimer();
+      timerRemaining = timerDuration; updateTimerUI();
+      timerInterval = setInterval(() => {
+        timerRemaining -= 0.1;
+        if (timerRemaining <= 0) { timerRemaining = 0; updateTimerUI(); stopTimer(); handleTimeUp(); }
+        else updateTimerUI();
+      }, 100);
+    }
+    function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+
+    function revealAnswer() {
+      document.querySelectorAll('.choice-btn').forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === current.answer) btn.classList.add('correct');
+      });
+    }
+
+    function acceptOffer() {
+      if (phase !== 'stealOffer') return;
+      offerBanner.classList.remove('show');
+      phase = 'answerSteal';
+      document.querySelectorAll('.choice-btn').forEach(b => { if (!b.classList.contains('wrong')) b.disabled = false; });
+      const other = teamLabel(1 - currentTeamIndex);
+      feedbackMsg.textContent = `✋ ${other} ขอตอบ! ถูก +3 · ผิด -3`;
+      turnIndicator.textContent = `⚡ ${other} ตอบข้อนี้ให้ถูก แย่ง 3 คะแนน!`;
+      startTimer();
+    }
+    function declineOffer() {
+      if (phase !== 'stealOffer') return;
+      offerBanner.classList.remove('show');
+      phase = 'wait';
+      revealAnswer();
+      feedbackMsg.textContent = `🙅 ${teamLabel(1 - currentTeamIndex)} ไม่ตอบ · ${answerLine()}`;
+      turnIndicator.textContent = `กด "ข้อต่อไป" เพื่อเล่นต่อ`;
+      nextBtn.disabled = false;
+    }
+
+    // Other team answers after a wrong answer: correct = +3 for them (-3 for the wrong team), wrong = -3 for them
+    function handleStealAnswer(idx) {
+      if (phase !== 'answerSteal') return;
+      stopTimer();
+      phase = 'wait';
+      const victim = currentTeamIndex, stealer = 1 - currentTeamIndex;
+      const btns = document.querySelectorAll('.choice-btn');
+      revealAnswer();
+      if (idx === current.answer) {
+        teams[stealer].score += 3;
+        teams[victim].score -= 3;
+        updateTeamUI();
+        feedbackMsg.textContent = `⚡ ${teamLabel(stealer)} ตอบถูก แย่งได้ +3 คะแนน! (${teamLabel(victim)} -3) · ${answerLine()}`;
+        turnIndicator.textContent = `⚡ ${teamLabel(stealer)} แย่งแต้มสำเร็จ!`;
+      } else {
+        btns[idx].classList.add('wrong');
+        teams[stealer].score -= 3;
+        updateTeamUI();
+        feedbackMsg.textContent = `❌ ${teamLabel(stealer)} ตอบผิด ถูกหัก 3 คะแนน · ${answerLine()}`;
+        turnIndicator.textContent = `❌ ไม่มีทีมไหนตอบถูก กด "ข้อต่อไป"`;
+      }
+      nextBtn.disabled = false;
+    }
+
+    function handleTimeUp() {
+      if (phase === 'answerSteal') {
+        phase = 'wait';
+        revealAnswer();
+        teams[1 - currentTeamIndex].score -= 3; // chose to answer but ran out of time = counts as wrong
+        updateTeamUI();
+        feedbackMsg.textContent = `⏰ หมดเวลา! ${teamLabel(1 - currentTeamIndex)} ถูกหัก 3 คะแนน · ${answerLine()}`;
+        turnIndicator.textContent = `⏰ ${teamLabel(1 - currentTeamIndex)} ตอบไม่ทัน กด "ข้อต่อไป"`;
+        nextBtn.disabled = false;
+        return;
+      }
+      if (questionLocked || answerSubmitted) return;
+      questionLocked = answerSubmitted = true;
+      phase = 'steal';
+      teams[currentTeamIndex].score -= 5;
+      updateTeamUI();
+      revealAnswer();
+      feedbackMsg.textContent = `⏰ หมดเวลา! ${teamLabel(currentTeamIndex)} ถูกหัก 5 คะแนน · ${answerLine()}`;
+      const other = teamLabel(1 - currentTeamIndex);
+      stealText.textContent = `⏰ หมดเวลา! ${other} สามารถแย่งแต้มได้`;
+      stealBanner.classList.add('show');
+      stealBtn.disabled = false;
+      turnIndicator.textContent = `⏰ หมดเวลา! ${other} กดปุ่มแย่งแต้ม`;
+      nextBtn.disabled = false; // allow skipping the steal
+    }
+
+    function handleSteal() {
+      if (phase !== 'steal') return;
+      stealBtn.disabled = true;
+      stealBanner.classList.remove('show');
+      const victim = currentTeamIndex, stealer = 1 - currentTeamIndex;
+      teams[victim].score -= 3;
+      teams[stealer].score += 3;
+      updateTeamUI();
+      feedbackMsg.textContent = `⚡ ${teamLabel(stealer)} แย่งได้ +3 คะแนน! (${teamLabel(victim)} โดนเพิ่ม -3)`;
+      turnIndicator.textContent = `⚡ ${teamLabel(stealer)} แย่งแต้มสำเร็จ!`;
+      phase = 'wait';
+      nextBtn.disabled = false;
+    }
+
+    // ---------- UI ----------
+    function updateTeamUI() {
+      teamAScoreEl.textContent = teams[0].score;
+      teamBScoreEl.textContent = teams[1].score;
+      teamACard.classList.toggle('active-turn', currentTeamIndex === 0);
+      teamBCard.classList.toggle('active-turn', currentTeamIndex === 1);
+      teamABadge.textContent = currentTeamIndex === 0 ? 'ตาของคุณ' : 'รอ';
+      teamBBadge.textContent = currentTeamIndex === 1 ? 'ตาของคุณ' : 'รอ';
+    }
+    function answerLine() {
+      const it = current.item;
+      return `เฉลย: ${it.w} = ${it.m}`;
+    }
+
+    // ---------- GAME FLOW ----------
+    function nextItem() {
+      if (deck.length === 0) deck = shuffle(vocab);
+      return deck.pop();
+    }
+
+    function startNewQuestion() {
+      stopTimer();
+      answerSubmitted = answeredCorrectly = wheelSpun = questionLocked = false;
+      phase = 'answer';
+      spinBtn.disabled = true; nextBtn.disabled = true;
+      stealBanner.classList.remove('show');
+      offerBanner.classList.remove('show');
+      wheelResult.textContent = 'แต้ม: ?';
+      feedbackMsg.textContent = '📌 ตอบคำถามให้ถูกก่อน แล้วจึงหมุนวงล้อ';
+
+      const mode = modeSelect.value;
+      const type = mode === 'mix' ? (Math.random() < 0.5 ? 'w2m' : 'm2w') : mode;
+      current = buildQuestion(nextItem(), type);
+      questionNo++;
+      qCount.textContent = `ข้อที่ ${questionNo} · คลังคำ ${vocab.length} คำ`;
+      renderQuestion();
+      startTimer();
+      turnIndicator.textContent = `🎯 ตาของ ${teamLabel(currentTeamIndex)} — ตอบคำถามให้ถูกก่อนหมุนวงล้อ!`;
+    }
+
+    function renderQuestion() {
+      const it = current.item;
+      questionText.innerHTML = '';
+      const add = (cls, txt) => { const d = document.createElement('div'); if (cls) d.className = cls; d.textContent = txt; questionText.appendChild(d); };
+      if (current.type === 'w2m') {
+        add('', 'คำว่า');
+        add('q-word', it.w);
+        if (it.s) add('q-say', `อ่านว่า ${it.s}`);
+        add('', 'หมายถึงอะไร?');
+      } else {
+        add('', 'คำใดมีความหมายว่า');
+        add('q-meaning', `“${it.m}”`);
+      }
+      choicesContainer.innerHTML = '';
+      current.choices.forEach((choice, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = choice;
+        btn.addEventListener('click', () => handleChoice(idx));
+        choicesContainer.appendChild(btn);
+      });
+    }
+
+    function handleChoice(selectedIdx) {
+      if (!current) return;
+      if (phase === 'answerSteal') return handleStealAnswer(selectedIdx);
+      if (questionLocked || answerSubmitted) return;
+      stopTimer();
+      const isCorrect = selectedIdx === current.answer;
+      answerSubmitted = questionLocked = true;
+      const btns = document.querySelectorAll('.choice-btn');
+
+      if (!isCorrect) {
+        // Wrong: -5, answer stays hidden, ask the other team if they want to answer
+        teams[currentTeamIndex].score -= 5;
+        updateTeamUI();
+        btns[selectedIdx].classList.add('wrong');
+        btns.forEach(b => b.disabled = true);
+        phase = 'stealOffer';
+        const other = teamLabel(1 - currentTeamIndex);
+        feedbackMsg.textContent = `❌ ${teamLabel(currentTeamIndex)} ตอบผิด! ถูกหัก 5 คะแนน`;
+        turnIndicator.textContent = `❓ ${other} จะตอบข้อนี้ไหม?`;
+        offerText.textContent = `${other} จะตอบข้อนี้ไหม? ถูก +3 · ผิด -3`;
+        offerBanner.classList.add('show');
+        return;
+      }
+      revealAnswer();
+
+      if (isCorrect) {
+        answeredCorrectly = true;
+        phase = 'spin';
+        feedbackMsg.textContent = `✅ ถูกต้อง! ${answerLine()} — หมุนวงล้อได้เลย`;
+        spinBtn.disabled = false;
+        turnIndicator.textContent = `🎡 ${teamLabel(currentTeamIndex)} ตอบถูก! หมุนวงล้อเพื่อรับแต้ม`;
+      } else {
+        teams[currentTeamIndex].score -= 5;
+        updateTeamUI();
+        feedbackMsg.textContent = `❌ ผิด! ถูกหัก 5 คะแนน · ${answerLine()}`;
+        nextBtn.disabled = false;
+        phase = 'wait';
+        turnIndicator.textContent = `❌ ${teamLabel(currentTeamIndex)} ตอบผิด! กด "ข้อต่อไป" เพื่อส่งต่อ`;
+      }
+    }
+
+    // ---------- SPIN ----------
+    function spinWheel() {
+      if (spinning || wheelSpun || !answeredCorrectly || phase !== 'spin') return;
+      spinning = true; spinBtn.disabled = true;
+      const dur = 2000 + Math.random() * 800, t0 = performance.now(), a0 = currentAngle;
+      const target = a0 + (5 + Math.floor(Math.random() * 6)) * 2 * Math.PI + Math.random() * 2 * Math.PI;
+      function frame(now) {
+        const p = Math.min((now - t0) / dur, 1);
+        currentAngle = a0 + (target - a0) * (1 - Math.pow(1 - p, 3));
+        drawWheel();
+        if (p < 1) return requestAnimationFrame(frame);
+        spinning = false; wheelSpun = true;
+        const seg = getLandedSegment();
+        if (seg.jackpot) return openJackpot();
+        awardSpin(seg.value);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // ---------- JACKPOT ----------
+    function openJackpot() {
+      jackpotUsed = true;
+      phase = 'jackpot';
+      wheelResult.textContent = '💰 JACKPOT!';
+      feedbackMsg.textContent = '💰 JACKPOT! เลือกแต้มที่ต้องการ (ไม่เกิน 25)';
+      turnIndicator.textContent = `💰 ${teamLabel(currentTeamIndex)} ได้ JACKPOT! เลือกแต้มเองได้เลย`;
+      jackpotTeam.textContent = teamLabel(currentTeamIndex);
+      jackpotModal.classList.add('show');
+    }
+    function pickJackpot(n) {
+      if (phase !== 'jackpot') return;
+      jackpotModal.classList.remove('show');
+      drawWheel(); // black slice is gone now
+      awardSpin(n, true);
+    }
+    jackpotGrid.innerHTML = '';
+    for (let n = 1; n <= JACKPOT_MAX; n++) {
+      const b = document.createElement('button');
+      b.className = 'jp-num'; b.textContent = '+' + n;
+      b.addEventListener('click', () => pickJackpot(n));
+      jackpotGrid.appendChild(b);
+    }
+
+    function awardSpin(value, isJackpot) {
+      {
+        const txt = (value > 0 ? '+' : '') + value;
+        wheelResult.textContent = isJackpot ? `💰 JACKPOT: ${txt}` : `แต้มจากวงล้อ: ${txt}`;
+        teams[currentTeamIndex].score += value;
+        updateTeamUI();
+        nextBtn.disabled = false;
+        feedbackMsg.textContent = isJackpot
+          ? `💰 JACKPOT ${txt} คะแนน! (ช่องดำหายไปแล้ว) กด "ข้อต่อไป"`
+          : `🎉 หมุนได้ ${txt} คะแนน! กด "ข้อต่อไป"`;
+        phase = 'wait';
+        turnIndicator.textContent = `${isJackpot ? '💰' : '🎡'} ${teamLabel(currentTeamIndex)} ได้ ${txt} คะแนน`;
+      }
+    }
+
+    function nextQuestion() {
+      if (spinning) return;
+      currentTeamIndex = 1 - currentTeamIndex;
+      updateTeamUI();
+      startNewQuestion();
+    }
+
+    function resetGame() {
+      if (spinning) return;
+      stopTimer();
+      teams = [{ score: 0 }, { score: 0 }];
+      currentTeamIndex = 0;
+      deck = shuffle(vocab);
+      questionNo = 0;
+      currentAngle = 0;
+      drawWheel();
+      updateTeamUI();
+      startNewQuestion();
+    }
+
+    // ---------- SETTINGS ----------
+    timerSlider.addEventListener('input', () => {
+      timerDuration = parseInt(timerSlider.value, 10);
+      timerDisplay.textContent = timerDuration + ' วินาที';
+      if (phase === 'answer' && !answerSubmitted) startTimer();
+      else { timerRemaining = timerDuration; updateTimerUI(); }
+    });
+
+    // ---------- INIT ----------
+    timerDuration = parseInt(timerSlider.value, 10);
+    timerDisplay.textContent = timerDuration + ' วินาที';
+    spinBtn.addEventListener('click', spinWheel);
+    nextBtn.addEventListener('click', nextQuestion);
+    resetBtn.addEventListener('click', resetGame);
+    stealBtn.addEventListener('click', handleSteal);
+    resetGame();
+    if (document.fonts) document.fonts.ready.then(drawWheel);
+  })();
+</script>
+</body>
+</html>
