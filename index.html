@@ -415,17 +415,16 @@
       }
       if (questionLocked || answerSubmitted) return;
       questionLocked = answerSubmitted = true;
-      phase = 'steal';
+      // Time up: -5, answer stays hidden, other team must choose an answer to steal (same as a wrong answer)
       teams[currentTeamIndex].score -= 5;
       updateTeamUI();
-      revealAnswer();
-      feedbackMsg.textContent = `⏰ หมดเวลา! ${teamLabel(currentTeamIndex)} ถูกหัก 5 คะแนน · ${answerLine()}`;
+      document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+      phase = 'stealOffer';
       const other = teamLabel(1 - currentTeamIndex);
-      stealText.textContent = `⏰ หมดเวลา! ${other} สามารถแย่งแต้มได้`;
-      stealBanner.classList.add('show');
-      stealBtn.disabled = false;
-      turnIndicator.textContent = `⏰ หมดเวลา! ${other} กดปุ่มแย่งแต้ม`;
-      nextBtn.disabled = false; // allow skipping the steal
+      feedbackMsg.textContent = `⏰ หมดเวลา! ${teamLabel(currentTeamIndex)} ถูกหัก 5 คะแนน`;
+      turnIndicator.textContent = `❓ ${other} จะตอบข้อนี้ไหม?`;
+      offerText.textContent = `⏰ หมดเวลา! ${other} จะตอบข้อนี้ไหม? ถูก +3 · ผิด -3`;
+      offerBanner.classList.add('show');
     }
 
     function handleSteal() {
